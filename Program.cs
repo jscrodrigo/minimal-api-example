@@ -32,6 +32,36 @@ app.MapGet("/tasks", async (AppDbContext dbContext) =>
         return tasks;
     });
 
+app.MapGet("/tasks/{id}", async (int taskId, AppDbContext dbContext) =>
+    {
+        var task = await dbContext
+            .Tasks
+            .Where(p => p.Id == taskId)
+            .FirstOrDefaultAsync();
+
+        if (null == task)
+        {
+            return Results.NotFound($"Task {taskId} not found!");
+        }
+
+        return Results.Ok(task);
+
+        //Or simply remove the brackets and use the code below to return the requested task:
+        //await dbContext.Tasks.FindAsync(taskId) is Task task ?
+        //      Results.Ok(task) :
+        //      Results.NotFound($"Task {taskId} not found!")
+    });
+
+app.MapGet("tasks/done", async (AppDbContext dbContext) =>
+    {
+        var doneTasks = await dbContext
+            .Tasks
+            .Where(p => p.IsDone)
+            .ToListAsync();
+
+        return Results.Ok(doneTasks);
+    });
+
 app.MapPost("/tasks/create", async (Task task, AppDbContext dbContext) =>
     {
         dbContext.Tasks.Add(task);
