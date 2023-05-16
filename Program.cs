@@ -20,6 +20,25 @@ app.UseHttpsRedirection();
 app.MapGet("GetPhrase", async () =>
     await new HttpClient().GetStringAsync("https://ron-swanson-quotes.herokuapp.com/v2/quotes"));
 
+app.MapGet("/tasks", async (AppDbContext dbContext) =>
+    {
+        var tasks = await dbContext.Tasks.ToListAsync();
+
+        if (!tasks.Any())
+        {
+            throw new Exception("Tasks not found!");
+        }
+
+        return tasks;
+    });
+
+app.MapPost("/tasks/create", async (Task task, AppDbContext dbContext) =>
+    {
+        dbContext.Tasks.Add(task);
+        await dbContext.SaveChangesAsync();
+        return Results.Created($"/tasks/create/{task.Id}", task);
+    });
+
 app.Run();
 
 class Task
@@ -34,7 +53,7 @@ class Task
 class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-    {     
+    {
     }
 
     public DbSet<Task> Tasks => Set<Task>();
