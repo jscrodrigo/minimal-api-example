@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Metadata.Ecma335;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -68,6 +69,36 @@ app.MapPost("/tasks/create", async (Task task, AppDbContext dbContext) =>
         await dbContext.SaveChangesAsync();
         return Results.Created($"/tasks/create/{task.Id}", task);
     });
+
+app.MapPut("/tasks/update/{id}", async (int taskId, Task newTask, AppDbContext dbContext) =>
+    {
+        var task = await dbContext.Tasks.FindAsync(taskId);
+        if (null == task)
+        {
+            return Results.NotFound($"Task {taskId} not found!");
+        }
+
+        task.Id = newTask.Id;
+        task.Name = newTask.Name;
+        task.IsDone = newTask.IsDone;
+
+        await dbContext.SaveChangesAsync();
+        return Results.Ok();
+    });
+
+app.MapDelete("/tasks/remove/{id}", async (int taskId, AppDbContext dbContext) =>
+{
+    var task = await dbContext.Tasks.FindAsync(taskId);
+
+    if (null == task)
+    {
+        return Results.NotFound($"Task {taskId} not found!");
+    }
+
+    dbContext.Tasks.Remove(task);
+    await dbContext.SaveChangesAsync();
+    return Results.Ok();
+});
 
 app.Run();
 
